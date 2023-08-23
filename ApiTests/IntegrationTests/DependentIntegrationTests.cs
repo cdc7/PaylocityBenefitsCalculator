@@ -1,20 +1,42 @@
+using Api.Dtos.Dependent;
+using Api.Models;
+using Microsoft.AspNetCore.Mvc.Testing;
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
-using Api.Dtos.Dependent;
-using Api.Models;
 using Xunit;
 
 namespace ApiTests.IntegrationTests;
 
-public class DependentIntegrationTests : IntegrationTest
+
+/// <summary>
+/// Integration tests for DependentController
+/// NOTE: for an issue related to my laptop or network, I was not able to
+/// test with the <see cref="IntegrationTest"/> class. I was receiving an HttpSocket
+/// exception and was unclear how to resolve. To get past this issue I implemented
+/// the integration test appraoch documented here: https://learn.microsoft.com/en-us/aspnet/core/test/integration-tests?view=aspnetcore-7.0#basic-tests-with-the-default-webapplicationfactory
+/// </summary>
+public class DependentIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
 {
+    private readonly WebApplicationFactory<Program> _factory;
+    private readonly HttpClient _httpClient;
+
+    public DependentIntegrationTests(WebApplicationFactory<Program> factory)
+    {
+        _factory = factory;
+        _httpClient = _factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            BaseAddress = new Uri("https://localhost:7124")
+        });
+    }
+
     [Fact]
     //task: make test pass
     public async Task WhenAskedForAllDependents_ShouldReturnAllDependents()
     {
-        var response = await HttpClient.GetAsync("/api/v1/dependents");
+        var response = await _httpClient.GetAsync("/api/v1/dependents");
         var dependents = new List<GetDependentDto>
         {
             new()
@@ -57,7 +79,7 @@ public class DependentIntegrationTests : IntegrationTest
     //task: make test pass
     public async Task WhenAskedForADependent_ShouldReturnCorrectDependent()
     {
-        var response = await HttpClient.GetAsync("/api/v1/dependents/1");
+        var response = await _httpClient.GetAsync("/api/v1/dependents/1");
         var dependent = new GetDependentDto
         {
             Id = 1,
@@ -73,7 +95,7 @@ public class DependentIntegrationTests : IntegrationTest
     //task: make test pass
     public async Task WhenAskedForANonexistentDependent_ShouldReturn404()
     {
-        var response = await HttpClient.GetAsync($"/api/v1/dependents/{int.MinValue}");
+        var response = await _httpClient.GetAsync($"/api/v1/dependents/{int.MinValue}");
         await response.ShouldReturn(HttpStatusCode.NotFound);
     }
 }

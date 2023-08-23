@@ -1,3 +1,9 @@
+using Api.MappingProfiles;
+using Api.Repositories;
+using Api.Repositories.Interfaces;
+using Api.Services;
+using Api.Services.Interfaces;
+using AutoMapper;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,6 +23,22 @@ builder.Services.AddSwaggerGen(c =>
         Description = "Api to support employee benefit cost calculations"
     });
 });
+
+// Auto Mapper Configurations
+var mapperConfig = new MapperConfiguration(mc =>
+{
+    mc.AddProfile(new MappingProfile());
+});
+
+// adding services to be used via injection
+IMapper mapper = mapperConfig.CreateMapper();
+builder.Services.AddSingleton(mapper);
+
+builder.Services.AddScoped<IEmployeeService, EmployeeService>();
+builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+builder.Services.AddScoped<IDependentService, DependentService>();
+builder.Services.AddScoped<IDependentRepository, DependentRepository>();
+builder.Services.AddScoped<IEmployeePaycheckService, EmployeePaycheckService>();
 
 var allowLocalhost = "allow localhost";
 builder.Services.AddCors(options =>
@@ -43,3 +65,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// this line allow access to this file in the integration test files
+public partial class Program { }
